@@ -6,15 +6,14 @@ export default function Page() {
   const [isLoaded, setIsLoaded] = useState(false);
   // Wallet addresses
   const satoshiTrialsAddress = "bc1qgn4fn3l3qqmawakwxyn";  // Replace with actual address
-  const treasuryReserveAddress = "bc1pwaakwyp5p35a505upwfv7munj0myjrm58jg2n2ef2pyke8uz90ss45w5hr";
-  const policyBackedAmount = 0; // Set to 0 BTC for now
+  const coldReserveAddress = "bc1pwaakwyp5p35a505upwfv7munj0myjrm58jg2n2ef2pyke8uz90ss45w5hr";
 
   const [satoshiTrialsBalance, setSatoshiTrialsBalance] = useState<number>(0);
-  const [treasuryReserveBalance, setTreasuryReserveBalance] = useState<number>(0);
+  const [coldReserveBalance, setColdReserveBalance] = useState<number>(0);
   const [usdPrice, setUsdPrice] = useState<number>(0);
   const [cadPrice, setCadPrice] = useState<number>(0);
 
-  const totalBTC = satoshiTrialsBalance + treasuryReserveBalance + policyBackedAmount;
+  const totalBTC = satoshiTrialsBalance + coldReserveBalance;
 
   useEffect(() => {
     const fetchWalletBalance = async (address: string) => {
@@ -41,9 +40,9 @@ export default function Page() {
 
     const updateBalances = async () => {
       const satoshiBalance = await fetchWalletBalance(satoshiTrialsAddress);
-      const treasuryBalance = await fetchWalletBalance(treasuryReserveAddress);
+      const coldBalance = await fetchWalletBalance(coldReserveAddress);
       setSatoshiTrialsBalance(satoshiBalance);
-      setTreasuryReserveBalance(treasuryBalance);
+      setColdReserveBalance(coldBalance);
       setIsLoaded(true);
     };
 
@@ -90,22 +89,15 @@ export default function Page() {
               </div>
 
               <div className={`space-y-2 transition-all duration-700 delay-500 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
-                <h2 className="text-xl font-light text-[#003333] tracking-wide">Treasury Reserve</h2>
+                <h2 className="text-xl font-light text-[#003333] tracking-wide">Cold Reserve</h2>
                 <div className="text-2xl font-light text-[#003333] pl-4">
-                  {formatBTC(treasuryReserveBalance)} BTC
-                </div>
-              </div>
-
-              <div className={`space-y-2 transition-all duration-700 delay-700 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
-                <h2 className="text-xl font-light text-[#003333] tracking-wide">Policy-Backed BTC (COLI)</h2>
-                <div className="text-2xl font-light text-[#003333] pl-4">
-                  {formatBTC(policyBackedAmount)} BTC
+                  {formatBTC(coldReserveBalance)} BTC
                 </div>
               </div>
             </div>
 
             {/* Total Holdings Section */}
-            <div className={`pt-6 border-t border-[#003333]/20 space-y-4 transition-all duration-700 delay-900 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            <div className={`pt-6 border-t border-[#003333]/20 space-y-4 transition-all duration-700 delay-700 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
               <div className="space-y-2">
                 <h2 className="text-2xl font-light text-[#003333] tracking-wide">Total BTC</h2>
                 <div className="text-3xl font-light text-[#F7FF59] bg-[#003333] py-2 px-4 rounded-lg text-center">
@@ -129,7 +121,7 @@ export default function Page() {
             </div>
 
             {/* BTC Price Section */}
-            <div className={`pt-6 border-t border-[#003333]/20 transition-all duration-700 delay-1000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            <div className={`pt-6 border-t border-[#003333]/20 transition-all duration-700 delay-900 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
               <h2 className="text-2xl font-light text-[#003333] tracking-wide mb-4">BTC Price</h2>
               <div className="grid grid-cols-2 gap-4">
                 <div>
