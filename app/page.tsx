@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 
 export default function Page() {
   const [ticker] = useState("1AKG");
@@ -55,17 +56,33 @@ export default function Page() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-black text-white">
-      <h1 className="text-4xl font-bold mb-8">{ticker} Bitcoin Holdings</h1>
-      <div className="space-y-4 text-center">
-        <div className="text-3xl font-bold">
-          {holding.toFixed(5)} BTC
-        </div>
-        <div className="text-2xl text-gray-300">
-          ≈ {formatCurrency(holding * usdPrice).replace('$', 'US$')}
-        </div>
-        <div className="text-2xl text-gray-300">
-          ≈ {formatCurrency(holding * cadPrice).replace('$', 'CA$')}
+    <div className="relative min-h-screen w-full">
+      {/* Background Image */}
+      <div className="fixed inset-0 w-full h-full">
+        <Image
+          src="/images/bitcoin-speaker.jpg"
+          alt="Bitcoin Speaker Background"
+          fill
+          style={{ objectFit: 'cover' }}
+          priority
+        />
+      </div>
+
+      {/* Content Overlay */}
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="bg-black/70 rounded-xl p-8 backdrop-blur-sm">
+          <h1 className="text-4xl font-bold mb-8 text-white text-center">{ticker} Bitcoin Holdings</h1>
+          <div className="space-y-4 text-center">
+            <div className="text-3xl font-bold text-yellow-400">
+              {holding.toFixed(5)} BTC
+            </div>
+            <div className="text-2xl text-gray-200">
+              ≈ {formatCurrency(holding * usdPrice).replace('$', 'US$')}
+            </div>
+            <div className="text-2xl text-gray-200">
+              ≈ {formatCurrency(holding * cadPrice).replace('$', 'CA$')}
+            </div>
+          </div>
         </div>
       </div>
     </div>
