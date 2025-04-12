@@ -14,12 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className="h-full">
-      <body
-        className={`h-full font-mono bg-black text-textStandard relative antialiased`}
-      >
+      <body className="h-full bg-white relative antialiased font-sans">
         <ThemeProvider attribute="data-theme">
           <div className="h-full flex justify-center items-center">
-            <main className="h-full">{children}</main>
+            <main className="h-full w-full">{children}</main>
           </div>
           <Footer />
         </ThemeProvider>
