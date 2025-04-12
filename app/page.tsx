@@ -88,7 +88,7 @@ export default function Page() {
           backgroundImage: 'url(/images/canurta-bg.jpg)'
         }}
       />
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 relative z-10">
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 relative z-1">
         <div className={`backdrop-blur-sm bg-white/30 dark:bg-[#003333]/30 rounded-xl p-8 shadow-2xl border border-[#003333]/20 max-w-2xl w-full transition-all duration-1000 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
           <div className="space-y-8">
             {/* Individual Wallets Section */}
@@ -159,7 +159,7 @@ export default function Page() {
         </div>
 
         {/* Whitepaper Link */}
-        <div className="mt-4 text-center">
+        <div className="mt-4 text-center mb-16">
           <a 
             href="https://mirror.xyz/canurta.eth/-jurXb6wU3CQzGIB0tgaxwynfweXNxS5PtA5TwqWjtM"
             target="_blank"
