@@ -8,7 +8,7 @@ const Footer = () => {
         <div className="flex justify-center items-center">
           <div className="flex items-center space-x-2 text-white/90">
             <a
-              href="https://github.com/canurta/goose"
+              href="https://block.github.io/goose/"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center space-x-1 hover:text-white hover:underline transition-colors"
@@ -17,7 +17,7 @@ const Footer = () => {
             </a>
             <span className="text-white/50">|</span>
             <a
-              href="https://github.com/canurta/bitcoin-treasury/blob/main/DISCLAIMER.md"
+              href="https://github.com/block/bitcoin-treasury/blob/main/DISCLAIMER.md"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-white hover:underline transition-colors"
