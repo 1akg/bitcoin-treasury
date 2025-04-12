@@ -1,7 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
+  reactStrictMode: true,
   basePath: '',
   assetPrefix: '/',
 };
 
-export default nextConfig;
+module.exports = nextConfig;
