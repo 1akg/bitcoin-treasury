@@ -83,32 +83,39 @@ export default function Page() {
   return (
     <main className="min-h-screen w-full bg-white dark:bg-[#003333] relative">
       <div 
-        className="fixed inset-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-50 dark:opacity-30 z-0 overflow-hidden"
+        className="fixed inset-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-50 dark:opacity-30 z-0"
         style={{
           backgroundImage: 'url(/images/canurta-bg.jpg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          backgroundAttachment: 'scroll',
-          height: '100dvh',
+          backgroundAttachment: 'initial',
+          height: '100%',
           width: '100%',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          WebkitTransform: 'translate3d(0,0,0)',
+          transform: 'translate3d(0,0,0)',
           WebkitBackfaceVisibility: 'hidden',
           MozBackfaceVisibility: 'hidden',
           backfaceVisibility: 'hidden'
         }}
       />
-      <div className="flex flex-col items-center justify-center min-h-screen w-full px-4 sm:px-6 md:px-8 py-4 relative z-1">
-        <div className={`backdrop-blur-sm bg-white/30 dark:bg-[#003333]/30 rounded-xl p-4 sm:p-6 md:p-8 shadow-2xl border border-[#003333]/20 w-full max-w-[90%] sm:max-w-[85%] md:max-w-2xl mx-auto transition-all duration-1000 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+      <div className="relative min-h-screen w-full flex flex-col items-center justify-center px-4 sm:px-6 md:px-8 py-4 z-10">
+        <div className={`backdrop-blur-sm bg-white/30 dark:bg-[#003333]/30 rounded-xl p-4 sm:p-6 md:p-8 shadow-2xl border border-[#003333]/20 w-[95%] sm:w-[90%] md:w-[85%] max-w-2xl mx-auto transition-all duration-1000 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
           <div className="space-y-6 sm:space-y-8">
             {/* Individual Wallets Section */}
             <div className="space-y-4 sm:space-y-6">
-              <div className={`space-y-2 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
+              <div className={`space-y-2 sm:space-y-3 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
                 <h2 className="text-lg sm:text-xl md:text-2xl font-light text-[#003333] dark:text-white tracking-wide">Satoshi Trials</h2>
                 <div className="text-xl sm:text-2xl md:text-3xl font-light text-[#003333] dark:text-white pl-2 sm:pl-4">
                   {formatBTC(satoshiTrialsBalance)} BTC
                 </div>
               </div>
 
-              <div className={`space-y-2 transition-all duration-700 delay-500 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
+              <div className={`space-y-2 sm:space-y-3 transition-all duration-700 delay-500 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
                 <h2 className="text-lg sm:text-xl md:text-2xl font-light text-[#003333] dark:text-white tracking-wide">Cold Reserve</h2>
                 <div className="text-xl sm:text-2xl md:text-3xl font-light text-[#003333] dark:text-white pl-2 sm:pl-4">
                   {formatBTC(coldReserveBalance)} BTC
@@ -118,7 +125,7 @@ export default function Page() {
 
             {/* Total Holdings Section */}
             <div className={`pt-4 sm:pt-6 border-t border-[#003333]/20 space-y-3 sm:space-y-4 transition-all duration-700 delay-700 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-              <div className="space-y-2">
+              <div className="space-y-2 sm:space-y-3">
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-light text-[#003333] dark:text-white tracking-wide">Total BTC</h2>
                 <div className="text-2xl sm:text-3xl md:text-4xl font-light text-[#F7FF59] bg-[#003333] dark:bg-[#002222] py-2 px-4 rounded-lg text-center">
                   {formatBTC(totalBTC)} BTC
