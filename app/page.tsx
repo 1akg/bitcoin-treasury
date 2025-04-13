@@ -81,35 +81,27 @@ export default function Page() {
   };
 
   return (
-    <main className="min-h-screen w-full bg-white dark:bg-[#003333] relative">
+    <main className="min-h-screen w-full bg-white dark:bg-[#003333] relative overflow-hidden">
       <div 
-        className="fixed inset-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-50 dark:opacity-30 z-0 overflow-hidden"
+        className="absolute inset-0 w-screen h-screen bg-cover bg-center bg-no-repeat opacity-50 dark:opacity-30 z-0"
         style={{
           backgroundImage: 'url(/images/canurta-bg.jpg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          backgroundSize: '100% 100%',
+          backgroundPosition: 'center center',
           backgroundRepeat: 'no-repeat',
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
           minHeight: '100vh',
           minWidth: '100vw',
-          WebkitTransform: 'translate3d(0,0,0)',
-          transform: 'translate3d(0,0,0)',
+          WebkitTransform: 'translateZ(0)',
+          transform: 'translateZ(0)',
           WebkitBackfaceVisibility: 'hidden',
-          MozBackfaceVisibility: 'hidden',
-          backfaceVisibility: 'hidden',
-          WebkitPerspective: '1000',
-          perspective: '1000'
+          backfaceVisibility: 'hidden'
         }}
       />
-      <div className="relative min-h-screen w-full flex flex-col items-center justify-center px-4 sm:px-6 md:px-8 py-4 z-10">
+      <div className="relative min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 z-10">
         <div 
           className={`backdrop-blur-sm bg-white/30 dark:bg-[#003333]/30 rounded-xl p-4 sm:p-6 md:p-8 shadow-2xl border border-[#003333]/20 mx-auto transition-all duration-1000 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
           style={{
-            width: 'clamp(280px, 90%, 42rem)',
+            width: 'min(90%, 42rem)',
             maxWidth: '100%'
           }}
         >
