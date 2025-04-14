@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Footer from './components/layout/footer';
+import Link from 'next/link';
 
 export default function Page() {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -71,7 +72,7 @@ export default function Page() {
     fetchPrices();
 
     // Set up intervals
-    const balanceInterval = setInterval(updateBalances, 5 * 60 * 1000); // Every 5 minutes
+    const balanceInterval = setInterval(updateBalances, 20 * 1000); // Every 20 seconds
     const pricesInterval = setInterval(fetchPrices, 20 * 1000); // Every 20 seconds
     const countdownInterval = setInterval(() => {
       setCountdown(prev => (prev > 0 ? prev - 1 : 20));
@@ -189,7 +190,7 @@ export default function Page() {
         </div>
 
         {/* Whitepaper Link */}
-        <div className="mt-4 text-center mb-16 px-4 max-w-full">
+        <div className="mt-4 text-center mb-16 px-4 max-w-full space-y-4">
           <a 
             href="https://mirror.xyz/canurta.eth/-jurXb6wU3CQzGIB0tgaxwynfweXNxS5PtA5TwqWjtM"
             target="_blank"
@@ -198,6 +199,14 @@ export default function Page() {
           >
             The Satoshi Trials Thesis: A Canurta Whitepaper
           </a>
+          <div>
+            <Link 
+              href="/transactions"
+              className="text-base sm:text-lg font-light text-[#003333] dark:text-white hover:text-[#004444] dark:hover:text-[#F7FF59] underline decoration-1 underline-offset-4"
+            >
+              View Transaction History
+            </Link>
+          </div>
         </div>
       </div>
       <Footer />
