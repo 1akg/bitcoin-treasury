@@ -7,7 +7,11 @@ export default function Page() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [countdown, setCountdown] = useState(20);
   // Wallet addresses
-  const satoshiTrialsAddress = "bc1qgn4fn3l3qqmawakwxyn6tp3ph6tqqtk532msph";  // Complete address
+  const satoshiTrialsAddresses = [
+    "bc1qpn4tnjt3lecd7t0fsq443hvydmra9ewx0vxxye",  // Current address
+    "bc1q9q3mw5lt566ycv805a74wktm5nansn3p4say23",  // Previous address
+    "bc1qgn4fn3l3qqmawakwxyn6tp3ph6tqqtk532msph"   // Previous address
+  ];
   const coldReserveAddress = "bc1pwaakwyp5p35a505upwfv7munj0myjrm58jg2n2ef2pyke8uz90ss45w5hr";
 
   const [satoshiTrialsBalance, setSatoshiTrialsBalance] = useState<number>(0);
@@ -23,7 +27,12 @@ export default function Page() {
         const response = await fetch(`https://blockstream.info/api/address/${address}`);
         if (!response.ok) throw new Error('Network response was not ok');
         const balanceData = await response.json();
-        return (balanceData.chain_stats.funded_txo_sum - balanceData.chain_stats.spent_txo_sum) / 1e8;
+        
+        // Calculate both confirmed and unconfirmed balances
+        const confirmedBalance = (balanceData.chain_stats.funded_txo_sum - balanceData.chain_stats.spent_txo_sum) / 1e8;
+        const unconfirmedBalance = (balanceData.mempool_stats.funded_txo_sum - balanceData.mempool_stats.spent_txo_sum) / 1e8;
+        
+        return confirmedBalance + unconfirmedBalance;
       } catch (error) {
         console.error('Error fetching balance:', error);
         return 0;
@@ -44,9 +53,15 @@ export default function Page() {
     };
 
     const updateBalances = async () => {
-      const satoshiBalance = await fetchWalletBalance(satoshiTrialsAddress);
+      // Fetch balances for all Satoshi Trials addresses and sum them
+      const satoshiBalances = await Promise.all(
+        satoshiTrialsAddresses.map(addr => fetchWalletBalance(addr))
+      );
+      const totalSatoshiBalance = satoshiBalances.reduce((sum, balance) => sum + balance, 0);
+      
       const coldBalance = await fetchWalletBalance(coldReserveAddress);
-      setSatoshiTrialsBalance(satoshiBalance);
+      
+      setSatoshiTrialsBalance(totalSatoshiBalance);
       setColdReserveBalance(coldBalance);
       setIsLoaded(true);
     };
