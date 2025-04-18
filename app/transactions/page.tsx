@@ -21,7 +21,6 @@ interface Transaction {
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [countdown, setCountdown] = useState(20);
 
   // Wallet addresses
   const satoshiTrialsAddresses = [
@@ -36,7 +35,8 @@ export default function TransactionsPage() {
       const date = new Date(timestamp * 1000);
       const formattedDate = `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getFullYear()}`;
       
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Increased delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       const response = await fetch(`https://api.coingecko.com/api/v3/coins/bitcoin/history?date=${formattedDate}&localization=false`, {
         headers: { 'Accept': 'application/json' }
@@ -129,18 +129,6 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     fetchTransactions();
-    
-    const interval = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          fetchTransactions();
-          return 20;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
   }, []);
 
   const formatBTC = (value: number): string => {
@@ -248,10 +236,6 @@ export default function TransactionsPage() {
                   </div>
                 ))
               )}
-            </div>
-
-            <div className="text-center text-[#003333] dark:text-white text-sm font-light">
-              Refreshing in {countdown} seconds
             </div>
           </div>
         </div>
