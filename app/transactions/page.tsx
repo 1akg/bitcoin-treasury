@@ -18,13 +18,6 @@ interface Transaction {
   };
 }
 
-interface PriceCache {
-  [date: string]: {
-    usd: number;
-    cad: number;
-  };
-}
-
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,56 +30,41 @@ export default function TransactionsPage() {
   ];
   const coldReserveAddress = "bc1pwaakwyp5p35a505upwfv7munj0myjrm58jg2n2ef2pyke8uz90ss45w5hr";
 
-  const formatDate = (timestamp: number): string => {
-    const date = new Date(timestamp * 1000);
-    return `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getFullYear()}`;
-  };
-
-  const fetchHistoricalPrices = async (timestamps: number[]): Promise<PriceCache> => {
-    const priceCache: PriceCache = {};
-    const uniqueDates = [...new Set(timestamps.map(formatDate))];
-    
-    // Process in batches of 3 to avoid rate limits
-    for (let i = 0; i < uniqueDates.length; i += 3) {
-      const batch = uniqueDates.slice(i, i + 3);
-      await Promise.all(batch.map(async (date) => {
-        try {
-          const response = await fetch(`https://api.coingecko.com/api/v3/coins/bitcoin/history?date=${date}&localization=false`, {
-            headers: { 'Accept': 'application/json' }
-          });
-          
-          if (!response.ok) {
-            console.warn('CoinGecko API error:', response.status);
-            return;
-          }
-          
-          const data = await response.json();
-          
-          if (data.market_data?.current_price) {
-            priceCache[date] = {
-              usd: data.market_data.current_price.usd,
-              cad: data.market_data.current_price.cad
-            };
-          }
-        } catch (error) {
-          console.warn('Error fetching price for date:', date, error);
-        }
-      }));
+  const fetchHistoricalPrice = async (timestamp: number) => {
+    try {
+      const date = new Date(timestamp * 1000);
+      const formattedDate = `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getFullYear()}`;
       
-      // Small delay between batches
-      if (i + 3 < uniqueDates.length) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch(`https://api.coingecko.com/api/v3/coins/bitcoin/history?date=${formattedDate}&localization=false`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        console.warn('CoinGecko API error:', response.status);
+        return undefined;
       }
+      
+      const data = await response.json();
+      
+      if (!data.market_data?.current_price) {
+        console.warn('No price data available for date:', formattedDate);
+        return undefined;
+      }
+      
+      return {
+        usd: data.market_data.current_price.usd,
+        cad: data.market_data.current_price.cad
+      };
+    } catch (error) {
+      console.warn('Error fetching historical price:', error);
+      return undefined;
     }
-    
-    return priceCache;
   };
 
   const fetchTransactions = async () => {
     try {
-      const tempTransactions: Transaction[] = [];
+      const allTransactions: Transaction[] = [];
 
-      // First, fetch all transactions without prices
       for (const address of [...satoshiTrialsAddresses, coldReserveAddress]) {
         try {
           const response = await fetch(`https://blockstream.info/api/address/${address}/txs`);
@@ -99,23 +77,32 @@ export default function TransactionsPage() {
           const txs = await response.json();
           
           for (const tx of txs) {
-            const value = tx.vout.reduce((sum: number, vout: any) => {
-              if (vout.scriptpubkey_address === address) {
-                return sum + vout.value;
-              }
-              return sum;
-            }, 0);
+            try {
+              const value = tx.vout.reduce((sum: number, vout: any) => {
+                if (vout.scriptpubkey_address === address) {
+                  return sum + vout.value;
+                }
+                return sum;
+              }, 0);
 
-            if (value > 0) {
-              tempTransactions.push({
-                txid: tx.txid,
-                status: {
-                  confirmed: tx.status.confirmed,
-                  block_time: tx.status.block_time
-                },
-                fee: tx.fee,
-                value
-              });
+              if (value > 0) {
+                const historicalPrice = tx.status.block_time ? 
+                  await fetchHistoricalPrice(tx.status.block_time) : 
+                  undefined;
+
+                allTransactions.push({
+                  txid: tx.txid,
+                  status: {
+                    confirmed: tx.status.confirmed,
+                    block_time: tx.status.block_time
+                  },
+                  fee: tx.fee,
+                  value,
+                  historicalPrice
+                });
+              }
+            } catch (error) {
+              console.warn(`Error processing transaction ${tx.txid}:`, error);
             }
           }
         } catch (error) {
@@ -123,31 +110,14 @@ export default function TransactionsPage() {
         }
       }
 
-      // Sort transactions first
-      tempTransactions.sort((a, b) => {
+      allTransactions.sort((a, b) => {
         const timeA = a.status.block_time ?? Math.floor(Date.now() / 1000);
         const timeB = b.status.block_time ?? Math.floor(Date.now() / 1000);
         return timeB - timeA;
       });
-
-      // Show transactions immediately while prices load
-      setTransactions(tempTransactions);
-      setIsLoading(false);
-
-      // Then fetch historical prices in batches
-      const timestamps = tempTransactions
-        .filter(tx => tx.status.confirmed)
-        .map(tx => tx.status.block_time);
       
-      const priceCache = await fetchHistoricalPrices(timestamps);
-
-      // Update transactions with prices
-      const updatedTransactions = tempTransactions.map(tx => ({
-        ...tx,
-        historicalPrice: tx.status.confirmed ? priceCache[formatDate(tx.status.block_time)] : undefined
-      }));
-
-      setTransactions(updatedTransactions);
+      setTransactions(allTransactions);
+      setIsLoading(false);
     } catch (error) {
       console.warn('Error fetching transactions:', error);
       setIsLoading(false);
@@ -172,7 +142,7 @@ export default function TransactionsPage() {
     }).format(value);
   };
 
-  const formatDisplayDate = (timestamp: number): string => {
+  const formatDate = (timestamp: number): string => {
     return new Date(timestamp * 1000).toLocaleString();
   };
 
@@ -228,7 +198,7 @@ export default function TransactionsPage() {
                   <div key={tx.txid} className="border border-[#003333]/20 rounded-lg p-4 space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-[#003333]/70 dark:text-white/70">
-                        {formatDisplayDate(tx.status.block_time)}
+                        {formatDate(tx.status.block_time)}
                       </span>
                       <span className={`text-sm ${tx.status.confirmed ? 'text-green-600' : 'text-yellow-600'}`}>
                         {tx.status.confirmed ? 'Confirmed' : 'Pending'}
@@ -239,16 +209,12 @@ export default function TransactionsPage() {
                       <div className="text-lg font-light text-[#003333] dark:text-white">
                         {formatBTC(tx.value)} BTC
                       </div>
-                      {tx.historicalPrice ? (
+                      {tx.historicalPrice && (
                         <div className="text-right text-sm text-[#003333]/70 dark:text-white/70">
                           <div>USD: {formatCurrency(tx.value / 100000000 * tx.historicalPrice.usd, 'USD')}</div>
                           <div>CAD: {formatCurrency(tx.value / 100000000 * tx.historicalPrice.cad, 'CAD')}</div>
                         </div>
-                      ) : tx.status.confirmed ? (
-                        <div className="text-right text-sm text-[#003333]/70 dark:text-white/70">
-                          Loading prices...
-                        </div>
-                      ) : null}
+                      )}
                     </div>
 
                     <div className="flex justify-between items-center">
