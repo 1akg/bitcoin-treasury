@@ -189,7 +189,7 @@ export default function Page() {
           Fetching latest in {countdown} seconds
         </div>
 
-        {/* Whitepaper Link */}
+        {/* Links Section */}
         <div className="mt-4 text-center mb-16 px-4 max-w-full space-y-4">
           <a 
             href="https://mirror.xyz/canurta.eth/-jurXb6wU3CQzGIB0tgaxwynfweXNxS5PtA5TwqWjtM"
@@ -199,12 +199,18 @@ export default function Page() {
           >
             The Satoshi Trials Thesis: A Canurta Whitepaper
           </a>
-          <div>
+          <div className="space-y-2">
             <Link 
               href="/transactions"
-              className="text-base sm:text-lg font-light text-[#003333] dark:text-white hover:text-[#004444] dark:hover:text-[#F7FF59] underline decoration-1 underline-offset-4"
+              className="text-base sm:text-lg font-light text-[#003333] dark:text-white hover:text-[#004444] dark:hover:text-[#F7FF59] underline decoration-1 underline-offset-4 block"
             >
               View Transaction History
+            </Link>
+            <Link 
+              href="/metrics"
+              className="text-base sm:text-lg font-light text-[#003333] dark:text-white hover:text-[#004444] dark:hover:text-[#F7FF59] underline decoration-1 underline-offset-4 block"
+            >
+              Treasury KPIs
             </Link>
           </div>
         </div>
