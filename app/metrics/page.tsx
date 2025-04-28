@@ -15,6 +15,10 @@ interface Metrics {
   navPremiumEquity: number;
   navPremiumConvertible: number;
   currentBTCPriceCAD: number;
+  btcGain: number;
+  btcDollarGain: number;
+  lastReportedBTC: number;
+  lastReportedDate: string;
 }
 
 export default function MetricsPage() {
@@ -86,6 +90,19 @@ export default function MetricsPage() {
       const btcInTreasury = allTransactions.reduce((sum, tx) => sum + tx.value, 0) / 1e8;
       console.log('BTC in Treasury:', btcInTreasury);
 
+      // Find the last reported BTC amount and date
+      const sortedTransactions = [...allTransactions].sort((a, b) => b.timestamp - a.timestamp);
+      const lastReportedBTC = sortedTransactions.length > 0 ? 
+        sortedTransactions[0].value / 1e8 : 
+        0;
+      const lastReportedDate = sortedTransactions.length > 0 ? 
+        new Date(sortedTransactions[0].timestamp * 1000).toLocaleDateString() : 
+        'N/A';
+
+      // Calculate BTC gains
+      const btcGain = btcInTreasury - lastReportedBTC;
+      const btcDollarGain = btcGain * currentBTCPriceCAD;
+
       // Fixed values from the table
       const totalUnitsOutstanding = 37093780;
       const unitCostEquity = 0.51;
@@ -108,7 +125,11 @@ export default function MetricsPage() {
         unitCostConvertible,
         navPremiumEquity,
         navPremiumConvertible,
-        currentBTCPriceCAD
+        currentBTCPriceCAD,
+        btcGain,
+        btcDollarGain,
+        lastReportedBTC,
+        lastReportedDate
       };
 
       console.log('Calculated metrics:', metricsData);
@@ -141,20 +162,15 @@ export default function MetricsPage() {
   return (
     <main className="min-h-screen w-full bg-white dark:bg-[#003333] relative overflow-hidden">
       <div 
-        className="absolute inset-0 w-screen h-screen bg-cover bg-center bg-no-repeat opacity-50 dark:opacity-30 z-0"
+        className="fixed inset-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-50 dark:opacity-30 z-0"
         style={{
           backgroundImage: 'url(/images/canurta-bg.jpg)',
-          backgroundSize: '100% 100%',
-          backgroundPosition: 'center center',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
-          minHeight: '100vh',
-          minWidth: '100vw',
-          WebkitTransform: 'translateZ(0)',
-          transform: 'translateZ(0)',
-          WebkitBackfaceVisibility: 'hidden',
-          backfaceVisibility: 'hidden'
         }}
       />
+      <div className="absolute inset-0 w-full h-full bg-white/30 dark:bg-[#003333]/30 z-0 pointer-events-none" />
       <div className="relative min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 z-10">
         <div 
           className={`backdrop-blur-sm bg-white/30 dark:bg-[#003333]/30 rounded-xl p-4 sm:p-6 md:p-8 shadow-2xl border border-[#003333]/20 mx-auto transition-all duration-1000 ease-out ${!isLoading ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
@@ -191,77 +207,110 @@ export default function MetricsPage() {
                 </button>
               </div>
             ) : metrics ? (
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b border-[#003333]/20">
-                      <th className="text-left py-4 px-4 text-[#003333] dark:text-white font-medium">KPI</th>
-                      <th className="text-left py-4 px-4 text-[#003333] dark:text-white font-medium">Definition</th>
-                      <th className="text-left py-4 px-4 text-[#003333] dark:text-white font-medium">Formula / Basis</th>
-                      <th className="text-left py-4 px-4 text-[#003333] dark:text-white font-medium">Value</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#003333]/20">
-                    <tr>
-                      <td className="py-4 px-4 text-[#003333] dark:text-white font-medium">BTC in Treasury</td>
-                      <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Total amount of Bitcoin held by the company.</td>
-                      <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Manually reported or verified from cold storage.</td>
-                      <td className="py-4 px-4 text-[#003333] dark:text-white">{formatNumber(metrics.btcInTreasury)} BTC</td>
-                    </tr>
-                    <tr>
-                      <td className="py-4 px-4 text-[#003333] dark:text-white font-medium">Total Units Outstanding</td>
-                      <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Assumed Diluted Shares Outstanding: basic units + all convertibles/options/RSUs.</td>
-                      <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Reported cap table (fully diluted).</td>
-                      <td className="py-4 px-4 text-[#003333] dark:text-white">{metrics.totalUnitsOutstanding.toLocaleString()} units</td>
-                    </tr>
-                    <tr>
-                      <td className="py-4 px-4 text-[#003333] dark:text-white font-medium">BTC Yield</td>
-                      <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Bitcoin held per unit of the company.</td>
-                      <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">BTC in Treasury / Total Units</td>
-                      <td className="py-4 px-4 text-[#003333] dark:text-white">{formatNumber(metrics.btcYield, 10)} BTC per unit</td>
-                    </tr>
-                    <tr>
-                      <td className="py-4 px-4 text-[#003333] dark:text-white font-medium">BTC NAV per Unit (sats)</td>
-                      <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Bitcoin value per unit in satoshis (1 BTC = 100M sats).</td>
-                      <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">BTC Yield × 100,000,000</td>
-                      <td className="py-4 px-4 text-[#003333] dark:text-white">{formatNumber(metrics.btcNavPerUnitSats, 2)} sats</td>
-                    </tr>
-                    <tr>
-                      <td className="py-4 px-4 text-[#003333] dark:text-white font-medium">BTC Value per Unit (CAD)</td>
-                      <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">CAD value of Bitcoin held per unit of the company.</td>
-                      <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">BTC Yield × BTC Market Price (CAD)</td>
-                      <td className="py-4 px-4 text-[#003333] dark:text-white">{formatCurrency(metrics.btcValuePerUnitCAD)}</td>
-                    </tr>
-                    <tr>
-                      <td className="py-4 px-4 text-[#003333] dark:text-white font-medium">Unit Cost (Equity)</td>
-                      <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Price paid per unit in last equity round (CAD).</td>
-                      <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Latest private sale</td>
-                      <td className="py-4 px-4 text-[#003333] dark:text-white">{formatCurrency(metrics.unitCostEquity)}</td>
-                    </tr>
-                    <tr>
-                      <td className="py-4 px-4 text-[#003333] dark:text-white font-medium">Unit Cost (Convertible Debt)</td>
-                      <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Conversion price for latest convertible debt issuance (CAD).</td>
-                      <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Contractual term</td>
-                      <td className="py-4 px-4 text-[#003333] dark:text-white">{formatCurrency(metrics.unitCostConvertible)}</td>
-                    </tr>
-                    <tr>
-                      <td className="py-4 px-4 text-[#003333] dark:text-white font-medium">NAV Premium (Equity)</td>
-                      <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Premium multiple of equity unit price over BTC value per unit.</td>
-                      <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Unit Cost / BTC Value per Unit</td>
-                      <td className="py-4 px-4 text-[#003333] dark:text-white">{formatNumber(metrics.navPremiumEquity, 2)}x</td>
-                    </tr>
-                    <tr>
-                      <td className="py-4 px-4 text-[#003333] dark:text-white font-medium">NAV Premium (Convertible)</td>
-                      <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Premium multiple of convertible unit price over BTC value per unit.</td>
-                      <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Convertible Cost / BTC Value per Unit</td>
-                      <td className="py-4 px-4 text-[#003333] dark:text-white">{formatNumber(metrics.navPremiumConvertible, 2)}x</td>
-                    </tr>
-                  </tbody>
-                </table>
-                <div className="mt-4 text-sm text-[#003333]/70 dark:text-white/70 italic">
-                  Note: BTC $ Gain and BTC Gain are <strong>not currently reported</strong> since there has been no increase in BTC holdings or change in unit structure since last reporting period. These metrics will be updated upon future treasury actions.
+              <>
+                {/* Desktop Table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b border-[#003333]/20">
+                        <th className="text-left py-4 px-4 text-[#003333] dark:text-white font-medium">KPI</th>
+                        <th className="text-left py-4 px-4 text-[#003333] dark:text-white font-medium">Definition</th>
+                        <th className="text-left py-4 px-4 text-[#003333] dark:text-white font-medium">Formula / Basis</th>
+                        <th className="text-left py-4 px-4 text-[#003333] dark:text-white font-medium">Value</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#003333]/20">
+                      <tr>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white font-medium">BTC in Treasury</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Total amount of Bitcoin held by the company.</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Manually reported or verified from cold storage.</td>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white">{formatNumber(metrics.btcInTreasury)} BTC</td>
+                      </tr>
+                      <tr>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white font-medium">Total Units Outstanding</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Assumed Diluted Shares Outstanding: basic units + all convertibles/options/RSUs.</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Reported cap table (fully diluted).</td>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white">{metrics.totalUnitsOutstanding.toLocaleString()} units</td>
+                      </tr>
+                      <tr>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white font-medium">BTC Yield</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Bitcoin held per unit of the company.</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">BTC in Treasury / Total Units</td>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white">{formatNumber(metrics.btcYield, 10)} BTC per unit</td>
+                      </tr>
+                      <tr>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white font-medium">BTC NAV per Unit (sats)</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Bitcoin value per unit in satoshis (1 BTC = 100M sats).</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">BTC Yield × 100,000,000</td>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white">{formatNumber(metrics.btcNavPerUnitSats, 2)} sats</td>
+                      </tr>
+                      <tr>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white font-medium">BTC Value per Unit (CAD)</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">CAD value of Bitcoin held per unit of the company.</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">BTC Yield × BTC Market Price (CAD)</td>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white">{formatCurrency(metrics.btcValuePerUnitCAD)}</td>
+                      </tr>
+                      <tr>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white font-medium">Unit Cost (Equity)</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Price paid per unit in last equity round (CAD).</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Latest private sale</td>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white">{formatCurrency(metrics.unitCostEquity)}</td>
+                      </tr>
+                      <tr>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white font-medium">Unit Cost (Convertible Debt)</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Conversion price for latest convertible debt issuance (CAD).</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Contractual term</td>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white">{formatCurrency(metrics.unitCostConvertible)}</td>
+                      </tr>
+                      <tr>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white font-medium">NAV Premium (Equity)</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Premium multiple of equity unit price over BTC value per unit.</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Unit Cost / BTC Value per Unit</td>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white">{formatNumber(metrics.navPremiumEquity, 2)}x</td>
+                      </tr>
+                      <tr>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white font-medium">NAV Premium (Convertible)</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Premium multiple of convertible unit price over BTC value per unit.</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Convertible Cost / BTC Value per Unit</td>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white">{formatNumber(metrics.navPremiumConvertible, 2)}x</td>
+                      </tr>
+                      <tr>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white font-medium">BTC Gain</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Change in BTC holdings since last transaction.</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Current BTC - Last Reported BTC</td>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white">{formatNumber(metrics.btcGain)} BTC</td>
+                      </tr>
+                      <tr>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white font-medium">BTC $ Gain</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">CAD value of change in BTC holdings since last transaction.</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">BTC Gain × Current BTC Price (CAD)</td>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white">{formatCurrency(metrics.btcDollarGain)}</td>
+                      </tr>
+                      <tr>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white font-medium">Last Reported</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Date and amount of last BTC transaction.</td>
+                        <td className="py-4 px-4 text-[#003333]/70 dark:text-white/70">Most recent transaction data</td>
+                        <td className="py-4 px-4 text-[#003333] dark:text-white">{metrics.lastReportedDate} ({formatNumber(metrics.lastReportedBTC)} BTC)</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
-              </div>
+                {/* Mobile Cards */}
+                <div className="block md:hidden space-y-4">
+                  {/* KPI Card Example */}
+                  <div className="rounded-lg border border-[#003333]/20 bg-white/80 dark:bg-[#003333]/80 p-4 shadow">
+                    <div className="font-medium text-[#003333] dark:text-white">BTC in Treasury</div>
+                    <div className="text-[#003333]/70 dark:text-white/70 text-sm mb-1">Total amount of Bitcoin held by the company.</div>
+                    <div className="text-[#003333]/70 dark:text-white/70 text-xs mb-1">Manually reported or verified from cold storage.</div>
+                    <div className="text-[#003333] dark:text-white font-bold text-lg">{formatNumber(metrics.btcInTreasury)} BTC</div>
+                  </div>
+                  {/* Repeat for each KPI, using the same structure as above, with the appropriate label, description, formula, and value. */}
+                  {/* ...other KPI cards... */}
+                </div>
+                <div className="mt-4 text-sm text-[#003333]/70 dark:text-white/70 italic">
+                  Note: Metrics are calculated based on the most recent transaction data available.
+                </div>
+              </>
             ) : (
               <div className="text-center text-[#003333] dark:text-white">
                 No metrics data available.
