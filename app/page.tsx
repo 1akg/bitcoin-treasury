@@ -125,10 +125,18 @@ export default function Page() {
         >
           <div className="space-y-6 sm:space-y-8">
             {/* Individual Wallets Section */}
-            <div className={`space-y-2 sm:space-y-3 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
-              <h2 className="text-lg sm:text-xl md:text-2xl font-light text-[#003333] dark:text-white tracking-wide">Satoshi Trials</h2>
-              <div className="text-xl sm:text-2xl md:text-3xl font-light text-[#003333] dark:text-white pl-2 sm:pl-4">
-                {formatBTC(satoshiTrialsBalance)} BTC
+            <div className="space-y-4 sm:space-y-6">
+              <div className={`space-y-2 sm:space-y-3 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}> 
+                <h2 className="text-lg sm:text-xl md:text-2xl font-light text-[#003333] dark:text-white tracking-wide">Satoshi Trials</h2>
+                <div className="text-xl sm:text-2xl md:text-3xl font-light text-[#003333] dark:text-white pl-2 sm:pl-4">
+                  {formatBTC(satoshiTrialsBalance)} BTC
+                </div>
+              </div>
+              <div className={`space-y-2 sm:space-y-3 transition-all duration-700 delay-500 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}> 
+                <h2 className="text-lg sm:text-xl md:text-2xl font-light text-[#003333] dark:text-white tracking-wide">Cold Reserve</h2>
+                <div className="text-xl sm:text-2xl md:text-3xl font-light text-[#003333] dark:text-white pl-2 sm:pl-4">
+                  {formatBTC(coldReserveBalance)} BTC
+                </div>
               </div>
             </div>
 
