@@ -9,6 +9,7 @@ export default function Page() {
   const [countdown, setCountdown] = useState(20);
   // Wallet addresses
   const satoshiTrialsAddresses = [
+    "bc1q6rfeuxjs58zwdz6mf0smdxx0thj2j0zlvq4h7f",  // New collateral address
     "bc1qpn4tnjt3lecd7t0fsq443hvydmra9ewx0vxxye",  // Current address
     "bc1q9q3mw5lt566ycv805a74wktm5nansn3p4say23",  // Previous address
     "bc1qgn4fn3l3qqmawakwxyn6tp3ph6tqqtk532msph"   // Previous address

@@ -16,66 +16,71 @@ interface Transaction {
     usd: number;
     cad: number;
   };
+  address: string;
 }
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Wallet addresses
   const satoshiTrialsAddresses = [
+    "bc1q6rfeuxjs58zwdz6mf0smdxx0thj2j0zlvq4h7f",
     "bc1qpn4tnjt3lecd7t0fsq443hvydmra9ewx0vxxye",
     "bc1q9q3mw5lt566ycv805a74wktm5nansn3p4say23",
     "bc1qgn4fn3l3qqmawakwxyn6tp3ph6tqqtk532msph"
   ];
   const coldReserveAddress = "bc1pwaakwyp5p35a505upwfv7munj0myjrm58jg2n2ef2pyke8uz90ss45w5hr";
 
-  const fetchHistoricalPrice = async (timestamp: number) => {
+  const fetchHistoricalPrice = async (timestamp: number, retries = 3, delay = 1000): Promise<{ usd: number; cad: number } | undefined> => {
     try {
       const date = new Date(timestamp * 1000);
       const formattedDate = `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getFullYear()}`;
-      
       const response = await fetch(`https://api.coingecko.com/api/v3/coins/bitcoin/history?date=${formattedDate}&localization=false`, {
         headers: { 'Accept': 'application/json' }
       });
-      
       if (!response.ok) {
         console.warn('CoinGecko API error:', response.status);
+        if (retries > 0) {
+          await new Promise(res => setTimeout(res, delay));
+          return fetchHistoricalPrice(timestamp, retries - 1, delay * 2);
+        }
         return undefined;
       }
-      
       const data = await response.json();
-      
       if (!data.market_data?.current_price) {
         console.warn('No price data available for date:', formattedDate);
         return undefined;
       }
-      
       return {
         usd: data.market_data.current_price.usd,
         cad: data.market_data.current_price.cad
       };
     } catch (error) {
       console.warn('Error fetching historical price:', error);
+      if (retries > 0) {
+        await new Promise(res => setTimeout(res, delay));
+        return fetchHistoricalPrice(timestamp, retries - 1, delay * 2);
+      }
       return undefined;
     }
   };
 
   const fetchTransactions = async () => {
     try {
+      setError(null);
+      setIsLoading(true);
       const allTransactions: Transaction[] = [];
 
       for (const address of [...satoshiTrialsAddresses, coldReserveAddress]) {
         try {
           const response = await fetch(`https://blockstream.info/api/address/${address}/txs`);
-          
           if (!response.ok) {
             console.warn(`Error fetching transactions for ${address}:`, response.statusText);
             continue;
           }
-          
           const txs = await response.json();
-          
           for (const tx of txs) {
             try {
               const value = tx.vout.reduce((sum: number, vout: any) => {
@@ -84,12 +89,10 @@ export default function TransactionsPage() {
                 }
                 return sum;
               }, 0);
-
               if (value > 0) {
                 const historicalPrice = tx.status.block_time ? 
                   await fetchHistoricalPrice(tx.status.block_time) : 
                   undefined;
-
                 allTransactions.push({
                   txid: tx.txid,
                   status: {
@@ -98,7 +101,8 @@ export default function TransactionsPage() {
                   },
                   fee: tx.fee,
                   value,
-                  historicalPrice
+                  historicalPrice,
+                  address
                 });
               }
             } catch (error) {
@@ -109,17 +113,15 @@ export default function TransactionsPage() {
           console.warn(`Error processing address ${address}:`, error);
         }
       }
-
       allTransactions.sort((a, b) => {
         const timeA = a.status.block_time ?? Math.floor(Date.now() / 1000);
         const timeB = b.status.block_time ?? Math.floor(Date.now() / 1000);
         return timeB - timeA;
       });
-      
       setTransactions(allTransactions);
       setIsLoading(false);
     } catch (error) {
-      console.warn('Error fetching transactions:', error);
+      setError('Error fetching transactions. Please try again later.');
       setIsLoading(false);
     }
   };
@@ -189,6 +191,16 @@ export default function TransactionsPage() {
                 <div className="text-center text-[#003333] dark:text-white">
                   Loading transactions...
                 </div>
+              ) : error ? (
+                <div className="text-center text-red-600 dark:text-red-400">
+                  {error}
+                  <button 
+                    onClick={fetchTransactions}
+                    className="mt-4 block mx-auto px-4 py-2 bg-[#003333] text-white rounded hover:bg-[#004444]"
+                  >
+                    Retry
+                  </button>
+                </div>
               ) : transactions.length === 0 ? (
                 <div className="text-center text-[#003333] dark:text-white">
                   No transactions found
@@ -200,9 +212,16 @@ export default function TransactionsPage() {
                       <span className="text-sm text-[#003333]/70 dark:text-white/70">
                         {formatDate(tx.status.block_time)}
                       </span>
-                      <span className={`text-sm ${tx.status.confirmed ? 'text-green-600' : 'text-yellow-600'}`}>
-                        {tx.status.confirmed ? 'Confirmed' : 'Pending'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {tx.address === "bc1q6rfeuxjs58zwdz6mf0smdxx0thj2j0zlvq4h7f" && (
+                          <span className="text-sm text-[#F7FF59] bg-[#003333] dark:bg-[#002222] px-2 py-1 rounded">
+                            Moved to Collateral
+                          </span>
+                        )}
+                        <span className={`text-sm ${tx.status.confirmed ? 'text-green-600' : 'text-yellow-600'}`}>
+                          {tx.status.confirmed ? 'Confirmed' : 'Pending'}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="flex justify-between items-start">
