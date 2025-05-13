@@ -9,7 +9,7 @@ export default function Page() {
   const [countdown, setCountdown] = useState(20);
   // Wallet addresses
   const satoshiTrialsAddresses = [
-    "bc1q6rfeuxjs58zwdz6mf0smdxx0thj2j0zlvq4h7f",  // New collateral address
+    "bc1q5z82egjmfsjtnf65sanjxapmnnhn09cnfsmfnp",  // New collateral address
     "bc1qpn4tnjt3lecd7t0fsq443hvydmra9ewx0vxxye",  // Current address
     "bc1q9q3mw5lt566ycv805a74wktm5nansn3p4say23",  // Previous address
     "bc1qgn4fn3l3qqmawakwxyn6tp3ph6tqqtk532msph"   // Previous address
@@ -126,21 +126,10 @@ export default function Page() {
         >
           <div className="space-y-6 sm:space-y-8">
             {/* Individual Wallets Section */}
-            <div className="space-y-4 sm:space-y-6">
-              <div className={`space-y-2 sm:space-y-3 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
-                <h2 className="text-lg sm:text-xl md:text-2xl font-light text-[#003333] dark:text-white tracking-wide">Satoshi Trials</h2>
-                <div className="text-base text-[#003333] dark:text-white pl-2 sm:pl-4">
-                  <div>Original Wallet: {formatBTC(satoshiTrialsBalances[originalWallet] || 0)} BTC</div>
-                  <div>Collateral Wallet: {formatBTC(satoshiTrialsBalances[collateralWallet] || 0)} BTC</div>
-                  <div className="font-bold mt-2">Total: {formatBTC(satoshiTrialsBalance)} BTC</div>
-                </div>
-              </div>
-
-              <div className={`space-y-2 sm:space-y-3 transition-all duration-700 delay-500 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
-                <h2 className="text-lg sm:text-xl md:text-2xl font-light text-[#003333] dark:text-white tracking-wide">Cold Reserve</h2>
-                <div className="text-xl sm:text-2xl md:text-3xl font-light text-[#003333] dark:text-white pl-2 sm:pl-4">
-                  {formatBTC(coldReserveBalance)} BTC
-                </div>
+            <div className={`space-y-2 sm:space-y-3 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
+              <h2 className="text-lg sm:text-xl md:text-2xl font-light text-[#003333] dark:text-white tracking-wide">Satoshi Trials</h2>
+              <div className="text-xl sm:text-2xl md:text-3xl font-light text-[#003333] dark:text-white pl-2 sm:pl-4">
+                {formatBTC(satoshiTrialsBalance)} BTC
               </div>
             </div>
 
