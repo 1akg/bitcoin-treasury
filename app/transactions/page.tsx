@@ -23,6 +23,7 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(5);
 
   // Wallet addresses
   const satoshiTrialsAddresses = [
@@ -206,51 +207,61 @@ export default function TransactionsPage() {
                   No transactions found
                 </div>
               ) : (
-                transactions.map((tx) => (
-                  <div key={tx.txid} className="border border-[#003333]/20 rounded-lg p-4 space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-[#003333]/70 dark:text-white/70">
-                        {formatDate(tx.status.block_time)}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        {tx.address === "bc1q6rfeuxjs58zwdz6mf0smdxx0thj2j0zlvq4h7f" && (
-                          <span className="text-sm text-[#F7FF59] bg-[#003333] dark:bg-[#002222] px-2 py-1 rounded">
-                            Moved to Collateral
-                          </span>
-                        )}
-                        <span className={`text-sm ${tx.status.confirmed ? 'text-green-600' : 'text-yellow-600'}`}>
-                          {tx.status.confirmed ? 'Confirmed' : 'Pending'}
+                <>
+                  {transactions.slice(0, visibleCount).map((tx) => (
+                    <div key={tx.txid} className="border border-[#003333]/20 rounded-lg p-4 space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-[#003333]/70 dark:text-white/70">
+                          {formatDate(tx.status.block_time)}
                         </span>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-between items-start">
-                      <div className="text-lg font-light text-[#003333] dark:text-white">
-                        {formatBTC(tx.value)} BTC
-                      </div>
-                      {tx.historicalPrice && (
-                        <div className="text-right text-sm text-[#003333]/70 dark:text-white/70">
-                          <div>USD: {formatCurrency(tx.value / 100000000 * tx.historicalPrice.usd, 'USD')}</div>
-                          <div>CAD: {formatCurrency(tx.value / 100000000 * tx.historicalPrice.cad, 'CAD')}</div>
+                        <div className="flex items-center gap-2">
+                          {tx.address === "bc1q6rfeuxjs58zwdz6mf0smdxx0thj2j0zlvq4h7f" && (
+                            <span className="text-sm text-[#F7FF59] bg-[#003333] dark:bg-[#002222] px-2 py-1 rounded">
+                              Moved to Collateral
+                            </span>
+                          )}
+                          <span className={`text-sm ${tx.status.confirmed ? 'text-green-600' : 'text-yellow-600'}`}>
+                            {tx.status.confirmed ? 'Confirmed' : 'Pending'}
+                          </span>
                         </div>
-                      )}
-                    </div>
+                      </div>
 
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-[#003333]/70 dark:text-white/70">
-                        Fee: {formatBTC(tx.fee)} BTC
-                      </span>
-                      <a
-                        href={`https://blockstream.info/tx/${tx.txid}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-[#003333] dark:text-white hover:text-[#004444] dark:hover:text-[#F7FF59] underline decoration-1 underline-offset-4"
-                      >
-                        View on Blockstream
-                      </a>
+                      <div className="flex justify-between items-start">
+                        <div className="text-lg font-light text-[#003333] dark:text-white">
+                          {formatBTC(tx.value)} BTC
+                        </div>
+                        {tx.historicalPrice && (
+                          <div className="text-right text-sm text-[#003333]/70 dark:text-white/70">
+                            <div>USD: {formatCurrency(tx.value / 100000000 * tx.historicalPrice.usd, 'USD')}</div>
+                            <div>CAD: {formatCurrency(tx.value / 100000000 * tx.historicalPrice.cad, 'CAD')}</div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-[#003333]/70 dark:text-white/70">
+                          Fee: {formatBTC(tx.fee)} BTC
+                        </span>
+                        <a
+                          href={`https://blockstream.info/tx/${tx.txid}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-[#003333] dark:text-white hover:text-[#004444] dark:hover:text-[#F7FF59] underline decoration-1 underline-offset-4"
+                        >
+                          View on Blockstream
+                        </a>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  ))}
+                  {visibleCount < transactions.length && (
+                    <button
+                      onClick={() => setVisibleCount(visibleCount + 5)}
+                      className="mt-4 block mx-auto px-4 py-2 bg-[#003333] text-white rounded hover:bg-[#004444]"
+                    >
+                      Load More
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
