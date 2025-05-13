@@ -25,25 +25,32 @@ export default function Page() {
 
   useEffect(() => {
     const fetchWalletBalance = async (address: string) => {
+      // This function is now unused, replaced by fetchAllWalletBalances
+      return 0;
+    };
+
+    const fetchAllWalletBalances = async () => {
       try {
-        const response = await fetch(`https://blockstream.info/api/address/${address}`);
+        const params = satoshiTrialsAddresses.map(addr => `address=${addr}`).join('&') + `&address=${coldReserveAddress}`;
+        const response = await fetch(`/api/btc-balance?${params}`);
         if (!response.ok) throw new Error('Network response was not ok');
-        const balanceData = await response.json();
-        
-        // Calculate both confirmed and unconfirmed balances
-        const confirmedBalance = (balanceData.chain_stats.funded_txo_sum - balanceData.chain_stats.spent_txo_sum) / 1e8;
-        const unconfirmedBalance = (balanceData.mempool_stats.funded_txo_sum - balanceData.mempool_stats.spent_txo_sum) / 1e8;
-        
-        return confirmedBalance + unconfirmedBalance;
+        const data = await response.json();
+        // Sum Satoshi Trials balances only
+        const satoshiTrialsBalance = satoshiTrialsAddresses.reduce((sum, addr) => sum + (data.balances[addr] || 0), 0);
+        setSatoshiTrialsBalance(satoshiTrialsBalance);
+        setColdReserveBalance(data.balances[coldReserveAddress] || 0);
+        setIsLoaded(true);
       } catch (error) {
-        console.error('Error fetching balance:', error);
-        return 0;
+        console.error('Error fetching balances:', error);
+        setSatoshiTrialsBalance(0);
+        setColdReserveBalance(0);
+        setIsLoaded(true);
       }
     };
 
     const fetchPrices = async () => {
       try {
-        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd,cad');
+        const response = await fetch('/api/btc-price');
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         setUsdPrice(data.bitcoin.usd);
@@ -55,17 +62,7 @@ export default function Page() {
     };
 
     const updateBalances = async () => {
-      // Fetch balances for all Satoshi Trials addresses and sum them
-      const satoshiBalances = await Promise.all(
-        satoshiTrialsAddresses.map(addr => fetchWalletBalance(addr))
-      );
-      const totalSatoshiBalance = satoshiBalances.reduce((sum, balance) => sum + balance, 0);
-      
-      const coldBalance = await fetchWalletBalance(coldReserveAddress);
-      
-      setSatoshiTrialsBalance(totalSatoshiBalance);
-      setColdReserveBalance(coldBalance);
-      setIsLoaded(true);
+      await fetchAllWalletBalances();
     };
 
     // Initial fetches

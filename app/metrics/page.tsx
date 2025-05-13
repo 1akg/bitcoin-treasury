@@ -44,64 +44,24 @@ function MetricsContent() {
       setIsLoading(true);
 
       // Fetch current BTC price
-      console.log('Fetching BTC price...');
-      const priceResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=cad&precision=2');
+      const priceResponse = await fetch('/api/btc-price');
       if (!priceResponse.ok) {
         throw new Error(`Failed to fetch BTC price: ${priceResponse.statusText}`);
       }
       const priceData = await priceResponse.json();
-      console.log('BTC price data:', priceData);
       const currentBTCPriceCAD = priceData.bitcoin.cad;
 
-      // Fetch all transactions
-      console.log('Fetching transactions...');
-      const allTransactions = [];
-      for (const address of [...satoshiTrialsAddresses, coldReserveAddress]) {
-        try {
-          console.log(`Fetching transactions for address: ${address}`);
-          const response = await fetch(`https://mempool.space/api/address/${address}/txs`);
-          if (!response.ok) {
-            console.warn(`Failed to fetch transactions for ${address}: ${response.statusText}`);
-            continue;
-          }
-          const txs = await response.json();
-          console.log(`Found ${txs.length} transactions for ${address}`);
-          
-          for (const tx of txs) {
-            const value = tx.vout.reduce((sum: number, vout: any) => {
-              if (vout.scriptpubkey_address === address) {
-                return sum + vout.value;
-              }
-              return sum;
-            }, 0);
-
-            if (value > 0) {
-              allTransactions.push({
-                value,
-                address,
-                timestamp: tx.status.block_time
-              });
-            }
-          }
-        } catch (error) {
-          console.warn(`Error processing address ${address}:`, error);
-        }
+      // Fetch all balances for Satoshi Trials and Cold Reserve
+      const params = [...satoshiTrialsAddresses, coldReserveAddress].map(addr => `address=${addr}`).join('&');
+      const balanceResponse = await fetch(`/api/btc-balance?${params}`);
+      if (!balanceResponse.ok) {
+        throw new Error(`Failed to fetch balances: ${balanceResponse.statusText}`);
       }
-
-      console.log('Total transactions found:', allTransactions.length);
-
-      // Calculate BTC in Treasury
-      const btcInTreasury = allTransactions.reduce((sum, tx) => sum + tx.value, 0) / 1e8;
-      console.log('BTC in Treasury:', btcInTreasury);
-
-      // Find the last reported BTC amount and date
-      const sortedTransactions = [...allTransactions].sort((a, b) => b.timestamp - a.timestamp);
-      const lastReportedBTC = sortedTransactions.length > 0 ? 
-        sortedTransactions[0].value / 1e8 : 
-        0;
-      const lastReportedDate = sortedTransactions.length > 0 ? 
-        new Date(sortedTransactions[0].timestamp * 1000).toLocaleDateString() : 
-        'N/A';
+      const balanceData = await balanceResponse.json();
+      const btcInTreasury = (Object.values(balanceData.balances) as number[]).reduce((sum, b) => sum + (typeof b === 'number' ? b : 0), 0);
+      // Since we don't have transaction data here, set lastReportedBTC and lastReportedDate to 0 and 'N/A'
+      const lastReportedBTC = 0;
+      const lastReportedDate = 'N/A';
 
       // Calculate BTC gains
       const btcGain = btcInTreasury - lastReportedBTC;
