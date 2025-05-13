@@ -37,6 +37,7 @@ function MetricsContent() {
     "bc1qgn4fn3l3qqmawakwxyn6tp3ph6tqqtk532msph"
   ];
   const coldReserveAddress = "bc1pwaakwyp5p35a505upwfv7munj0myjrm58jg2n2ef2pyke8uz90ss45w5hr";
+  const originalSatoshiTrialsWallet = "bc1qpn4tnjt3lecd7t0fsq443hvydmra9ewx0vxxye";
 
   const fetchMetrics = async () => {
     try {
@@ -51,14 +52,11 @@ function MetricsContent() {
       const priceData = await priceResponse.json();
       const currentBTCPriceCAD = priceData.bitcoin.cad;
 
-      // Fetch all balances for Satoshi Trials and Cold Reserve
-      const params = [...satoshiTrialsAddresses, coldReserveAddress].map(addr => `address=${addr}`).join('&');
-      const balanceResponse = await fetch(`/api/btc-balance?${params}`);
-      if (!balanceResponse.ok) {
-        throw new Error(`Failed to fetch balances: ${balanceResponse.statusText}`);
-      }
-      const balanceData = await balanceResponse.json();
-      const btcInTreasury = (Object.values(balanceData.balances) as number[]).reduce((sum, b) => sum + (typeof b === 'number' ? b : 0), 0);
+      // Fetch funded_txo_sum for the original wallet
+      const response = await fetch(`https://mempool.space/api/address/${originalSatoshiTrialsWallet}`);
+      if (!response.ok) throw new Error('Network response was not ok');
+      const data = await response.json();
+      const btcInTreasury = (data.chain_stats.funded_txo_sum || 0) / 1e8;
       // Since we don't have transaction data here, set lastReportedBTC and lastReportedDate to 0 and 'N/A'
       const lastReportedBTC = 0;
       const lastReportedDate = 'N/A';
