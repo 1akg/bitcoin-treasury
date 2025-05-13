@@ -20,6 +20,7 @@ interface Transaction {
 }
 
 export default function TransactionsPage() {
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -68,12 +69,12 @@ export default function TransactionsPage() {
     }
   };
 
-  const fetchTransactions = async () => {
+  // Fetch all transactions (without price) once
+  const fetchAllTransactions = async () => {
     try {
       setError(null);
       setIsLoading(true);
-      const allTransactions: Transaction[] = [];
-
+      const allTxs: Transaction[] = [];
       for (const address of [...satoshiTrialsAddresses, coldReserveAddress]) {
         try {
           const response = await fetch(`https://blockstream.info/api/address/${address}/txs`);
@@ -91,10 +92,7 @@ export default function TransactionsPage() {
                 return sum;
               }, 0);
               if (value > 0) {
-                const historicalPrice = tx.status.block_time ? 
-                  await fetchHistoricalPrice(tx.status.block_time) : 
-                  undefined;
-                allTransactions.push({
+                allTxs.push({
                   txid: tx.txid,
                   status: {
                     confirmed: tx.status.confirmed,
@@ -102,7 +100,6 @@ export default function TransactionsPage() {
                   },
                   fee: tx.fee,
                   value,
-                  historicalPrice,
                   address
                 });
               }
@@ -114,12 +111,12 @@ export default function TransactionsPage() {
           console.warn(`Error processing address ${address}:`, error);
         }
       }
-      allTransactions.sort((a, b) => {
+      allTxs.sort((a, b) => {
         const timeA = a.status.block_time ?? Math.floor(Date.now() / 1000);
         const timeB = b.status.block_time ?? Math.floor(Date.now() / 1000);
         return timeB - timeA;
       });
-      setTransactions(allTransactions);
+      setAllTransactions(allTxs);
       setIsLoading(false);
     } catch (error) {
       setError('Error fetching transactions. Please try again later.');
@@ -127,9 +124,39 @@ export default function TransactionsPage() {
     }
   };
 
+  // Fetch price for a batch of transactions
+  const fetchPricesForBatch = async (txs: Transaction[]) => {
+    const updated = await Promise.all(
+      txs.map(async (tx) => {
+        if (tx.status.block_time) {
+          const historicalPrice = await fetchHistoricalPrice(tx.status.block_time);
+          return { ...tx, historicalPrice };
+        }
+        return tx;
+      })
+    );
+    return updated;
+  };
+
+  // On mount, fetch all transactions, then fetch price for first batch
   useEffect(() => {
-    fetchTransactions();
+    (async () => {
+      await fetchAllTransactions();
+    })();
   }, []);
+
+  // When allTransactions or visibleCount changes, fetch price for visible batch
+  useEffect(() => {
+    const updateVisible = async () => {
+      if (allTransactions.length === 0) return;
+      setIsLoading(true);
+      const batch = allTransactions.slice(0, visibleCount);
+      const updatedBatch = await fetchPricesForBatch(batch);
+      setTransactions(updatedBatch);
+      setIsLoading(false);
+    };
+    updateVisible();
+  }, [allTransactions, visibleCount]);
 
   const formatBTC = (value: number): string => {
     return (value / 1e8).toFixed(8);
@@ -196,7 +223,7 @@ export default function TransactionsPage() {
                 <div className="text-center text-red-600 dark:text-red-400">
                   {error}
                   <button 
-                    onClick={fetchTransactions}
+                    onClick={fetchAllTransactions}
                     className="mt-4 block mx-auto px-4 py-2 bg-[#003333] text-white rounded hover:bg-[#004444]"
                   >
                     Retry
@@ -208,7 +235,7 @@ export default function TransactionsPage() {
                 </div>
               ) : (
                 <>
-                  {transactions.slice(0, visibleCount).map((tx) => (
+                  {transactions.map((tx) => (
                     <div key={tx.txid} className="border border-[#003333]/20 rounded-lg p-4 space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-[#003333]/70 dark:text-white/70">
@@ -253,7 +280,7 @@ export default function TransactionsPage() {
                       </div>
                     </div>
                   ))}
-                  {visibleCount < transactions.length && (
+                  {visibleCount < allTransactions.length && (
                     <button
                       onClick={() => setVisibleCount(visibleCount + 5)}
                       className="mt-4 block mx-auto px-4 py-2 bg-[#003333] text-white rounded hover:bg-[#004444]"
