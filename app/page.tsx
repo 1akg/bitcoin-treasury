@@ -9,10 +9,9 @@ export default function Page() {
   const [countdown, setCountdown] = useState(20);
   // Wallet addresses
   const satoshiTrialsAddresses = [
-    "bc1q5z82egjmfsjtnf65sanjxapmnnhn09cnfsmfnp",  // New collateral address
-    "bc1qpn4tnjt3lecd7t0fsq443hvydmra9ewx0vxxye",  // Current address
-    "bc1q9q3mw5lt566ycv805a74wktm5nansn3p4say23",  // Previous address
-    "bc1qgn4fn3l3qqmawakwxyn6tp3ph6tqqtk532msph"   // Previous address
+    "bc1q9q3mw5lt566ycv805a74wktm5nansn3p4say23",  // Original Satoshi Trials wallet
+    "bc1q6rfeuxjs58zwdz6mf0smdxx0thj2j0zlvq4h7f",  // Collateral wallet 1
+    "bc1q5z82egjmfsjtnf65sanjxapmnnhn09cnfsmfnp"   // Collateral wallet 2
   ];
   const coldReserveAddress = "bc1pwaakwyp5p35a505upwfv7munj0myjrm58jg2n2ef2pyke8uz90ss45w5hr";
   const originalWallet = "bc1qpn4tnjt3lecd7t0fsq443hvydmra9ewx0vxxye";
