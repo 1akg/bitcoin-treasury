@@ -15,6 +15,8 @@ export default function Page() {
     "bc1qgn4fn3l3qqmawakwxyn6tp3ph6tqqtk532msph"   // Previous address
   ];
   const coldReserveAddress = "bc1pwaakwyp5p35a505upwfv7munj0myjrm58jg2n2ef2pyke8uz90ss45w5hr";
+  const originalWallet = "bc1qpn4tnjt3lecd7t0fsq443hvydmra9ewx0vxxye";
+  const collateralWallet = "bc1q6rfeuxjs58zwdz6mf0smdxx0thj2j0zlvq4h7f";
 
   const [satoshiTrialsBalances, setSatoshiTrialsBalances] = useState<Record<string, number>>({});
   const [satoshiTrialsBalance, setSatoshiTrialsBalance] = useState<number>(0);
@@ -128,8 +130,8 @@ export default function Page() {
               <div className={`space-y-2 sm:space-y-3 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
                 <h2 className="text-lg sm:text-xl md:text-2xl font-light text-[#003333] dark:text-white tracking-wide">Satoshi Trials</h2>
                 <div className="text-base text-[#003333] dark:text-white pl-2 sm:pl-4">
-                  <div>Original Wallet: {formatBTC(satoshiTrialsBalances["bc1qpn4tnjt3lecd7t0fsq443hvydmra9ewx0vxxye"] || 0)} BTC</div>
-                  <div>Collateral Wallet: {formatBTC(satoshiTrialsBalances["bc1q6rfeuxjs58zwdz6mf0smdxx0thj2j0zlvq4h7f"] || 0)} BTC</div>
+                  <div>Original Wallet: {formatBTC(satoshiTrialsBalances[originalWallet] || 0)} BTC</div>
+                  <div>Collateral Wallet: {formatBTC(satoshiTrialsBalances[collateralWallet] || 0)} BTC</div>
                   <div className="font-bold mt-2">Total: {formatBTC(satoshiTrialsBalance)} BTC</div>
                 </div>
               </div>
