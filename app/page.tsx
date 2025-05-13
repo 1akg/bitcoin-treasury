@@ -14,16 +14,17 @@ export default function Page() {
     "bc1q5z82egjmfsjtnf65sanjxapmnnhn09cnfsmfnp"   // Collateral wallet 2
   ];
   const coldReserveAddress = "bc1pwaakwyp5p35a505upwfv7munj0myjrm58jg2n2ef2pyke8uz90ss45w5hr";
-  const originalWallet = "bc1qpn4tnjt3lecd7t0fsq443hvydmra9ewx0vxxye";
+  const originalSatoshiTrialsWallet = "bc1qpn4tnjt3lecd7t0fsq443hvydmra9ewx0vxxye";
   const collateralWallet = "bc1q6rfeuxjs58zwdz6mf0smdxx0thj2j0zlvq4h7f";
 
   const [satoshiTrialsBalances, setSatoshiTrialsBalances] = useState<Record<string, number>>({});
-  const [satoshiTrialsBalance, setSatoshiTrialsBalance] = useState<number>(0);
+  const [satoshiTrialsFunded, setSatoshiTrialsFunded] = useState<number>(0);
+  const [satoshiTrialsCurrent, setSatoshiTrialsCurrent] = useState<number>(0);
   const [coldReserveBalance, setColdReserveBalance] = useState<number>(0);
   const [usdPrice, setUsdPrice] = useState<number>(0);
   const [cadPrice, setCadPrice] = useState<number>(0);
 
-  const totalBTC = satoshiTrialsBalance + coldReserveBalance;
+  const totalBTC = satoshiTrialsFunded + coldReserveBalance;
 
   useEffect(() => {
     const fetchWalletBalance = async (address: string) => {
@@ -33,20 +34,23 @@ export default function Page() {
 
     const fetchAllWalletBalances = async () => {
       try {
-        const params = satoshiTrialsAddresses.map(addr => `address=${addr}`).join('&') + `&address=${coldReserveAddress}`;
-        const response = await fetch(`/api/btc-balance?${params}`);
+        // Fetch funded and spent for the original wallet
+        const response = await fetch(`https://mempool.space/api/address/${originalSatoshiTrialsWallet}`);
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
-        // Sum Satoshi Trials balances only
-        const satoshiTrialsBalance = satoshiTrialsAddresses.reduce((sum, addr) => sum + (data.balances[addr] || 0), 0);
-        setSatoshiTrialsBalance(satoshiTrialsBalance);
-        setSatoshiTrialsBalances(data.balances);
-        setColdReserveBalance(data.balances[coldReserveAddress] || 0);
+        setSatoshiTrialsFunded((data.chain_stats.funded_txo_sum || 0) / 1e8);
+        setSatoshiTrialsCurrent(((data.chain_stats.funded_txo_sum || 0) - (data.chain_stats.spent_txo_sum || 0)) / 1e8);
+        // Fetch cold reserve as before
+        const params = `address=${coldReserveAddress}`;
+        const coldResponse = await fetch(`/api/btc-balance?${params}`);
+        if (!coldResponse.ok) throw new Error('Network response was not ok');
+        const coldData = await coldResponse.json();
+        setColdReserveBalance(coldData.balances[coldReserveAddress] || 0);
         setIsLoaded(true);
       } catch (error) {
         console.error('Error fetching balances:', error);
-        setSatoshiTrialsBalance(0);
-        setSatoshiTrialsBalances({});
+        setSatoshiTrialsFunded(0);
+        setSatoshiTrialsCurrent(0);
         setColdReserveBalance(0);
         setIsLoaded(true);
       }
@@ -129,7 +133,10 @@ export default function Page() {
               <div className={`space-y-2 sm:space-y-3 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}> 
                 <h2 className="text-lg sm:text-xl md:text-2xl font-light text-[#003333] dark:text-white tracking-wide">Satoshi Trials</h2>
                 <div className="text-xl sm:text-2xl md:text-3xl font-light text-[#003333] dark:text-white pl-2 sm:pl-4">
-                  {formatBTC(satoshiTrialsBalance)} BTC
+                  {formatBTC(satoshiTrialsFunded)} BTC
+                </div>
+                <div className="text-base text-[#003333] dark:text-white pl-2 sm:pl-4">
+                  <span className="font-light">Current Wallet Balance: {formatBTC(satoshiTrialsCurrent)} BTC</span>
                 </div>
               </div>
               <div className={`space-y-2 sm:space-y-3 transition-all duration-700 delay-500 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}> 
